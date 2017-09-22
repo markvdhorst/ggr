@@ -56,8 +56,26 @@ func loadQuotaFile(file string) {
 		log.Printf("Failed to load configuration from [%s]: %v", fileName, err)
 		return
 	}
+	instantiateSessionTable(browsers)
 	updateQuota(quotaName, browsers)
+
 	log.Printf("Loaded configuration from [%s]:\n%v\n", file, browsers)
+}
+
+func instantiateSessionTable(browsers Browsers){
+	confLock.Lock()
+	defer confLock.Unlock()
+	for _, browser := range browsers.Browsers{
+		for _,version := range browser.Versions{
+			for _, region := range version.Regions{
+				for _, host := range region.Hosts {
+					sessions[host.net()] = 0
+				}
+			}
+		}
+	}
+
+
 }
 
 func updateQuota(quotaName string, browsers Browsers) {

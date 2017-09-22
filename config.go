@@ -35,7 +35,6 @@ type Region struct {
 	Name  string `xml:"name,attr"`
 	Hosts Hosts  `xml:"host"`
 }
-
 // Host - just a hostname
 type Host struct {
 	Name     string `xml:"name,attr"`
@@ -134,11 +133,10 @@ func (hosts Hosts) choose() (*Host, int) {
 		total += h.Count
 	}
 	if total > 0 {
-		r := rand.Intn(total)
 		for i, host := range hosts {
-			r -= host.Count
-			if r < 0 {
-				return &hosts[i], i
+			if sessions[host.net()] < host.Count{
+				sessions[host.net()] = sessions[host.net()]+1
+				return &host, i
 			}
 		}
 	}

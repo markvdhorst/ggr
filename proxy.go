@@ -49,6 +49,7 @@ var (
 	num      uint64
 	numLock  sync.Mutex
 	confLock sync.RWMutex
+	sessions = make(map[string]int)
 )
 
 // Routes - an MD5 to host map
@@ -225,6 +226,7 @@ func route(w http.ResponseWriter, r *http.Request) {
 loop:
 	for h, i := hosts.choose(); ; h, i = hosts.choose() {
 		count++
+
 		if h == nil {
 			break loop
 		}
@@ -234,6 +236,7 @@ loop:
 		select {
 		case <-r.Context().Done():
 			log.Printf("[%d] [%.2fs] [CLIENT_DISCONNECTED] [%s] [%s] [%s] [%s] [%d]\n", id, float64(time.Now().Sub(start).Seconds()), user, remote, fmtBrowser(browser, version), h.net(), count)
+			sessions[h.net()] = sessions[h.net()]-1
 			return
 		default:
 		}
@@ -271,6 +274,7 @@ loop:
 		}
 		errMsg := browserErrMsg(resp)
 		log.Printf("[%d] [SESSION_FAILED] [%s] [%s] [%s] [%s] %s\n", id, user, remote, fmtBrowser(browser, version), h.net(), errMsg)
+		sessions[h.net()] = sessions[h.net()]-1
 		lastHostError = errMsg
 		if len(hosts) == 0 {
 			break loop
@@ -312,6 +316,7 @@ func proxy(r *http.Request) {
 			if r.Method == "DELETE" && len(fragments) == sessPart+1 {
 				sess := fragments[sessPart]
 				log.Printf("[SESSION_DELETED] [%s] [%s] [%s]\n", remote, h.net(), sess)
+				sessions[h.net()] = sessions[h.net()]-1
 			}
 			return
 		}
