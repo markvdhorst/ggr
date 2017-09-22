@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/xml"
 	"fmt"
-	"math/rand"
 	"strings"
 )
 
